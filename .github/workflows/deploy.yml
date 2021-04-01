@@ -1,0 +1,42 @@
+name: Build & Deploy 🚀
+
+on:
+  push: 
+    branches: ['main']
+
+jobs:
+  build:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build project
+        run: cargo build --release --locked
+
+      - name: Make artifact directory
+        run: mkdir -p ./artifacts/${{ github.repository }}
+
+      - name: Create Zip File
+        uses: montudor/action-zip@v0.1.1
+        with:
+          args: zip -qq -r ./artifacts/${{ github.repository }}/app.zip target/release/joinbloque deploy/joinbloque.service
+
+      - name: Copy binary to telnet server 
+        run: |
+          eval $(ssh-agent)
+          ssh-add - <<< "${{ secrets.SSH_KEY }}"
+          scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" ./artifacts/${{ github.repository }}/app.zip ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/app.zip
+
+      - name: executing remote ssh commands to run service
+        run: |
+          eval $(ssh-agent)
+          ssh-add - <<< "${{ secrets.SSH_KEY }}"
+          ssh  -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null"  ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+            unzip app.zip
+            mkdir -p /join
+            mv target/release/joinbloque /join/bloque
+            mv deploy/joinbloque.service /usr/lib/systemd/system/
+            systemctl restart joinbloque.service
+          EOF

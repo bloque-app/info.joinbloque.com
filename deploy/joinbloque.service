@@ -1,0 +1,13 @@
+[Unit]
+Description=joinbloque
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/join/bloque
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=telnet_joinbloque
+
+[Install]
+WantedBy=multi-user.target
