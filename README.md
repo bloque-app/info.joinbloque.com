@@ -12,6 +12,13 @@ Our nerd landing page.
 telnet info.joinbloque.com
 ```
 
+or
+
+```sh
+nc -vt info.joinbloque.com 23
+```
+
+
 ## Setup 🔨
 
 Run the following script
